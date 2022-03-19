@@ -22,8 +22,9 @@ class MedicalServiceImplTest {
 
     private ByteArrayOutputStream output = new ByteArrayOutputStream();
     private PrintStream systemOut = System.out;
-    private MedicalServiceImpl medicalService;
     private String patientId = "123";
+    private MedicalServiceImpl medicalService;
+    private SendAlertService alertService;
 
     @BeforeEach
     public void medicalServiceInit() {
@@ -34,7 +35,7 @@ class MedicalServiceImplTest {
                 .thenReturn(new PatientInfo("123", "Иван", "Петров", LocalDate.of(1980, 11, 26),
                         new HealthInfo(new BigDecimal("38.65"), new BloodPressure(130, 90))));
 
-        SendAlertService alertService = Mockito.spy(SendAlertServiceImpl.class);
+        alertService = Mockito.spy(SendAlertServiceImpl.class);
 
         medicalService = new MedicalServiceImpl(patientInfoRepository, alertService);
     }
@@ -61,24 +62,16 @@ class MedicalServiceImplTest {
         Assertions.assertEquals(expected, actual);
     }
 
+
     @Test
-    void checkTemperatureShouldNotOutput(){
+    void sendShouldNotBeCalledWithNormalIndications() {
         BigDecimal temperature = BigDecimal.valueOf(38.6);
         medicalService.checkTemperature(patientId, temperature);
 
-        String expected = "";
-        String actual = output.toString();
-        Assertions.assertEquals(expected,actual);
-    }
-
-    @Test
-    void checkBloodPressureShouldNotOutputWithNormal(){
         BloodPressure bloodPressure = new BloodPressure(130, 90);
         medicalService.checkBloodPressure(patientId, bloodPressure);
 
-        String expected = "";
-        String actual = output.toString();
-        Assertions.assertEquals(expected,actual);
+        Mockito.verify(alertService, Mockito.times(0)).send(Mockito.anyString());
     }
 
 
